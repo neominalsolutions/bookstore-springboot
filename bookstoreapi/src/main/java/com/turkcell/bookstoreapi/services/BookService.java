@@ -4,12 +4,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.VariableOperators.Map;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import com.turkcell.bookstoreapi.dtos.BookDto;
+import com.turkcell.bookstoreapi.dtos.BookWithCategoryDto;
 import com.turkcell.bookstoreapi.models.Book;
 import com.turkcell.bookstoreapi.repositories.BookRepository;
 
@@ -33,6 +39,33 @@ public class BookService {
     public List<BookDto> getAllBooks() {
         return bookRepository.findByTitle("CUENTO A LA VIDA").stream()
         .map(this::convertToDto).toList();
+    }
+
+    // Bu Aggregation Framework ile çalışırken
+    public List<BookWithCategoryDto> getBooksWithCategoryNames(){
+        var aggregation = Aggregation.newAggregation(
+            Aggregation.match(Criteria.where("num_pages").gte(1000)),
+            Aggregation.lookup("categories", "category_ids", "_id", "categories"),
+            Aggregation.project("title","num_pages").and("categories.name").as("categoryNames")
+            );
+
+            var response = mongoTemplate.aggregate(aggregation, "books",BookWithCategoryDto.class);
+
+            return response.getMappedResults();
+    }
+
+    // Query işlemleri Filter
+    public List<BookDto> findByYearEditionAndNumPagesGreaterThanEqual(int yearEdition,int numPages){
+        var query = new Query();
+        query.addCriteria(Criteria.where("year_edition").is(yearEdition));
+        query.addCriteria(Criteria.where("num_pages").is(numPages));
+
+        // Veritabanına atılan sorgularda document nesneleri ile çalışmamız lazım
+        var data = mongoTemplate.find(query, Book.class);
+        var dto = data.stream().map(this::convertToDto).toList();
+
+        return dto;
+        
     }
 
     public BookDto updateBook(String id,BookDto bookDto){

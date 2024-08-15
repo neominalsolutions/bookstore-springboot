@@ -1,6 +1,7 @@
 package com.turkcell.bookstoreapi.controllers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.turkcell.bookstoreapi.dtos.BookDto;
+import com.turkcell.bookstoreapi.dtos.BookWithCategoryDto;
 import com.turkcell.bookstoreapi.services.BookService;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -42,6 +44,19 @@ public class BookControler {
 
         return new ResponseEntity<>(book,HttpStatus.CREATED);
     }
+
+    @GetMapping("/getBooksWithCategoryNames")
+    public ResponseEntity<List<BookWithCategoryDto>> getBooksWithCategoryNames() {
+        var data = bookService.getBooksWithCategoryNames();
+        return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/findByYearEditionAndNumPagesGreaterThanEqual")
+    public ResponseEntity<List<BookDto>> findByYearEditionAndNumPagesGreaterThanEqual() {
+        var data = bookService.findByYearEditionAndNumPagesGreaterThanEqual(2022,100);
+        return ResponseEntity.ok(data);
+    }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<BookDto> getBookById(@PathVariable String id) {
